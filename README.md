@@ -6,7 +6,7 @@ and measures hedging effectiveness.
 
 - **Backend**: Python + FastAPI for the FX risk engine
 - **Frontend**: React + Vite + TypeScript dashboard (exposure breakdown,
-  forward hedging, FX VaR, hedge effectiveness) *(in progress)*
+  forward hedging, FX VaR, hedge effectiveness)
 
 > **Disclaimer**: Simplified demo built for portfolio purposes. Not a
 > production risk system and should not be used for regulatory reporting or
@@ -160,12 +160,14 @@ FastAPI backend with FX exposure, forward hedging, FX VaR, hedge
 effectiveness, and synthetic data generation. All endpoints tested
 with 32 passing pytest tests. See [`backend/`](backend/).
 
-### Phase 2: Full-stack local demo *(planned)*
+### Phase 2: Full-stack local demo *(in progress)*
 
 React + Vite + TypeScript dashboard with four tabs: Exposure, Hedging,
-VaR Analysis, and Hedge Effectiveness. Recharts visualisations for
-exposure bar charts, correlation heatmap, VaR contribution breakdown,
-and hedged vs unhedged P&L distributions.
+VaR Analysis, and Hedge Effectiveness. App shell with tab navigation,
+TypeScript types mirroring backend models, and API client are complete.
+Recharts visualisations for exposure bar charts, correlation heatmap,
+VaR contribution breakdown, and hedged vs unhedged P&L distributions
+are next. See [`frontend/`](frontend/).
 
 ### Phase 3: AWS deployment *(planned)*
 
@@ -218,6 +220,13 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+```
+
+**Frontend**
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 **Tests**
