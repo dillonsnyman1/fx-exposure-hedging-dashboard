@@ -160,14 +160,14 @@ FastAPI backend with FX exposure, forward hedging, FX VaR, hedge
 effectiveness, and synthetic data generation. All endpoints tested
 with 32 passing pytest tests. See [`backend/`](backend/).
 
-### Phase 2: Full-stack local demo *(in progress)*
+### Phase 2: Full-stack local demo *(complete)*
 
-React + Vite + TypeScript dashboard with four tabs: Exposure, Hedging,
-VaR Analysis, and Hedge Effectiveness. App shell with tab navigation,
-TypeScript types mirroring backend models, and API client are complete.
-Recharts visualisations for exposure bar charts, correlation heatmap,
-VaR contribution breakdown, and hedged vs unhedged P&L distributions
-are next. See [`frontend/`](frontend/).
+React + Vite + TypeScript dashboard with four tabs: Exposure (summary
+cards, exposure bar chart), Hedging (interactive forward rate table
+with hedge ratio and tenor controls), VaR Analysis (correlation
+heatmap, component VaR chart, VaR surface table), and Hedge
+Effectiveness (dollar-offset and regression metrics, overlaid hedged vs
+unhedged return distributions). See [`frontend/`](frontend/).
 
 ### Phase 3: AWS deployment *(planned)*
 
