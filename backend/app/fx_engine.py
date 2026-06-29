@@ -3,6 +3,43 @@ from __future__ import annotations
 import numpy as np
 from scipy.stats import linregress
 
+# Currencies quoted directly against USD as CCY/USD (e.g. EURUSD=X)
+DIRECT_QUOTE_CURRENCIES = {"EUR", "GBP", "AUD", "NZD"}
+# Currencies quoted as USD/CCY (e.g. USDJPY=X) - spot must be inverted
+INVERTED_QUOTE_CURRENCIES = {"JPY", "CHF", "CAD", "SEK", "NOK", "SGD", "MXN", "ZAR"}
+
+
+def fetch_live_spot_rates(currencies: list[str], base_currency: str = "USD") -> dict:
+    import yfinance as yf  # lazy import - heavy, only needed for this endpoint
+
+    spot_rates: dict[str, float] = {}
+    unavailable: list[str] = []
+
+    for ccy in currencies:
+        if ccy == base_currency:
+            spot_rates[ccy] = 1.0
+            continue
+
+        if ccy in DIRECT_QUOTE_CURRENCIES:
+            ticker_symbol = f"{ccy}{base_currency}=X"
+            invert = False
+        else:
+            ticker_symbol = f"{base_currency}{ccy}=X"
+            invert = True
+
+        try:
+            tk = yf.Ticker(ticker_symbol)
+            hist = tk.history(period="1d")
+            if hist.empty:
+                unavailable.append(ccy)
+                continue
+            rate = float(hist["Close"].iloc[-1])
+            spot_rates[ccy] = (1.0 / rate) if invert else rate
+        except Exception:
+            unavailable.append(ccy)
+
+    return {"spot_rates": spot_rates, "unavailable": unavailable}
+
 
 def compute_forward_rate(
     spot: float, r_domestic: float, r_foreign: float, tenor: float

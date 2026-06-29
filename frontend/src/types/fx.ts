@@ -99,6 +99,11 @@ export interface SamplePortfolioResponse {
   dates: string[];
 }
 
+export interface LiveRatesResponse {
+  spot_rates: Record<string, number>;
+  unavailable: string[];
+}
+
 export const CURRENCY_COLORS: Record<string, string> = {
   EUR: "#2563eb",
   GBP: "#7c3aed",

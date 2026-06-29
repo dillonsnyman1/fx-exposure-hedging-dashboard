@@ -150,6 +150,16 @@ EUR-CHF ~0.80, AUD-CAD ~0.50, JPY-CHF ~0.40 as safe havens). Daily
 volatilities are calibrated to annualised levels of 7.5-11% depending
 on the pair.
 
+### 6. Live Spot Rates
+
+Spot rates can be pulled from Yahoo Finance for any currency in the
+portfolio. Currencies quoted directly against USD (EUR, GBP, AUD, NZD)
+use the `CCYUSD=X` ticker; currencies quoted as USD per unit of foreign
+currency (JPY, CHF, CAD, SEK, NOK, SGD) use `USDCCY=X` and the rate is
+inverted so all spot rates are expressed as USD per unit of foreign
+currency. Interest rates remain manual inputs, since there is no single
+reliable source for short-term risk-free rates across currencies.
+
 ---
 
 ## Roadmap
@@ -165,9 +175,18 @@ with 32 passing pytest tests. See [`backend/`](backend/).
 React + Vite + TypeScript dashboard with four tabs: Exposure (summary
 cards, exposure bar chart), Hedging (interactive forward rate table
 with hedge ratio and tenor controls), VaR Analysis (correlation
-heatmap, component VaR chart, VaR surface table), and Hedge
-Effectiveness (dollar-offset and regression metrics, overlaid hedged vs
-unhedged return distributions). See [`frontend/`](frontend/).
+heatmap, component VaR chart, VaR surface table, confidence/holding
+period selectors), and Hedge Effectiveness (dollar-offset and
+regression metrics, overlaid hedged vs unhedged return distributions).
+
+The portfolio builder at the top of every tab supports adding, editing
+and removing positions, with a "Fetch Live Spot Rates" button that
+pulls real-time FX rates from Yahoo Finance for every currency in the
+portfolio. Manually edited spot rates are highlighted with a one-click
+reset back to the fetched value, and a freshness timer flags rates as
+stale after 60 seconds - the same pattern used in the
+[options pricer dashboard](https://github.com/dillonsnyman1/options-pricer-dashboard)'s
+ticker lookup. See [`frontend/`](frontend/).
 
 ### Phase 3: AWS deployment *(planned)*
 
@@ -185,15 +204,18 @@ GitHub Actions CI/CD pipeline.
 | POST | `/api/forwards` | Forward rates and hedged vs unhedged exposure |
 | POST | `/api/fx-var` | Portfolio VaR surface, VaR contributions, correlation matrix |
 | POST | `/api/hedge-effectiveness` | Dollar-offset ratio, regression R-squared, P&L distributions |
+| POST | `/api/live-rates` | Live FX spot rates from Yahoo Finance for a list of currencies |
 | GET | `/api/health` | Health check |
 
 ---
 
 ## Known limitations and possible extensions
 
-- **Static spot rates.** The current implementation accepts spot rates
-  as input rather than pulling live market data. A future extension
-  could integrate a rate provider for real-time exposure monitoring.
+- **No live interest rates.** Spot rates can be fetched live from
+  Yahoo Finance, but interest rates remain manual inputs - there is no
+  single reliable source for short-term risk-free rates across
+  currencies. A future extension could pull government bond yields as
+  a proxy.
 
 - **Linear hedging only.** Only FX forwards are modelled. Options-based
   hedging strategies (protective puts, collars) would provide a richer

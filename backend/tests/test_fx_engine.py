@@ -5,6 +5,7 @@ from app.fx_engine import (
     compute_forward_rate,
     compute_hedged_exposure,
     compute_net_exposure,
+    fetch_live_spot_rates,
     generate_sample_portfolio,
     hedge_effectiveness_dollar_offset,
     hedge_effectiveness_regression,
@@ -148,3 +149,52 @@ class TestSamplePortfolio:
         for ccy in p["fx_returns"]:
             assert len(p["fx_returns"][ccy]) == 250
         assert len(p["dates"]) == 250
+
+
+class _FakeTicker:
+    def __init__(self, symbol, price):
+        self.symbol = symbol
+        self._price = price
+
+    def history(self, period="1d"):
+        import pandas as pd
+        if self._price is None:
+            return pd.DataFrame()
+        return pd.DataFrame({"Close": [self._price]})
+
+
+class TestFetchLiveSpotRates:
+    def test_base_currency_returns_one(self):
+        result = fetch_live_spot_rates(["USD"], "USD")
+        assert result["spot_rates"]["USD"] == 1.0
+        assert result["unavailable"] == []
+
+    def test_direct_quote_currency(self, monkeypatch):
+        import app.fx_engine as fx_engine
+
+        def fake_ticker(symbol):
+            assert symbol == "EURUSD=X"
+            return _FakeTicker(symbol, 1.09)
+
+        monkeypatch.setattr("yfinance.Ticker", fake_ticker)
+        result = fetch_live_spot_rates(["EUR"], "USD")
+        assert result["spot_rates"]["EUR"] == pytest.approx(1.09)
+        assert result["unavailable"] == []
+
+    def test_inverted_quote_currency(self, monkeypatch):
+        def fake_ticker(symbol):
+            assert symbol == "USDJPY=X"
+            return _FakeTicker(symbol, 155.0)
+
+        monkeypatch.setattr("yfinance.Ticker", fake_ticker)
+        result = fetch_live_spot_rates(["JPY"], "USD")
+        assert result["spot_rates"]["JPY"] == pytest.approx(1 / 155.0)
+
+    def test_unavailable_currency(self, monkeypatch):
+        def fake_ticker(symbol):
+            return _FakeTicker(symbol, None)
+
+        monkeypatch.setattr("yfinance.Ticker", fake_ticker)
+        result = fetch_live_spot_rates(["EUR"], "USD")
+        assert result["unavailable"] == ["EUR"]
+        assert "EUR" not in result["spot_rates"]

@@ -156,3 +156,17 @@ class SamplePortfolioResponse(BaseModel):
     interest_rates: list[InterestRatePair]
     fx_returns: dict[str, list[float]]
     dates: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Live spot rates
+# ---------------------------------------------------------------------------
+
+class LiveRatesRequest(BaseModel):
+    currencies: list[str] = Field(min_length=1)
+    base_currency: str = Field(default="USD")
+
+
+class LiveRatesResponse(BaseModel):
+    spot_rates: dict[str, float]
+    unavailable: list[str] = Field(default_factory=list)

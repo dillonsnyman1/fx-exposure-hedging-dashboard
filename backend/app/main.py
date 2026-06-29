@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.fx_engine import (
     compute_hedged_exposure,
     compute_net_exposure,
+    fetch_live_spot_rates,
     generate_sample_portfolio,
     hedge_effectiveness_dollar_offset,
     hedge_effectiveness_regression,
@@ -20,6 +21,8 @@ from app.models import (
     FxVarResponse,
     HedgeEffectivenessRequest,
     HedgeEffectivenessResponse,
+    LiveRatesRequest,
+    LiveRatesResponse,
     SamplePortfolioResponse,
 )
 from app.var_engine import (
@@ -134,6 +137,16 @@ async def hedge_effectiveness(req: HedgeEffectivenessRequest) -> HedgeEffectiven
         hedged_vol=hedged_vol,
         vol_reduction_pct=vol_reduction,
     )
+
+
+# ---------------------------------------------------------------------------
+# Live spot rates
+# ---------------------------------------------------------------------------
+
+@app.post("/api/live-rates", response_model=LiveRatesResponse)
+async def live_rates(req: LiveRatesRequest) -> LiveRatesResponse:
+    result = fetch_live_spot_rates(req.currencies, req.base_currency)
+    return LiveRatesResponse(**result)
 
 
 # ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import type {
   FxVarResponse,
   HedgeEffectivenessResponse,
   InterestRatePair,
+  LiveRatesResponse,
   SamplePortfolioResponse,
 } from "../types/fx.ts";
 
@@ -89,6 +90,16 @@ export function computeFxVar(
     fx_returns: fxReturns,
     confidences,
     holding_periods: holdingPeriods,
+  });
+}
+
+export function fetchLiveRates(
+  currencies: string[],
+  baseCurrency: string = "USD"
+): Promise<LiveRatesResponse> {
+  return post<LiveRatesResponse>("/api/live-rates", {
+    currencies,
+    base_currency: baseCurrency,
   });
 }
 
