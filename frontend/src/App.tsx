@@ -1,7 +1,26 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { fetchSamplePortfolio } from "./api/client.ts";
-import type { SamplePortfolioResponse } from "./types/fx.ts";
+import {
+  computeExposure,
+  computeForwards,
+  computeFxVar,
+  computeHedgeEffectiveness,
+  fetchSamplePortfolio,
+} from "./api/client.ts";
+import { CorrelationHeatmap } from "./components/CorrelationHeatmap.tsx";
+import { ExposureBarChart } from "./components/ExposureBarChart.tsx";
+import { ExposureSummaryCards } from "./components/ExposureSummaryCards.tsx";
+import { ForwardHedgingPanel } from "./components/ForwardHedgingPanel.tsx";
+import { HedgeEffectivenessPanel } from "./components/HedgeEffectivenessPanel.tsx";
+import { VarContributionChart } from "./components/VarContributionChart.tsx";
+import { VarSurfaceTable } from "./components/VarSurfaceTable.tsx";
+import type {
+  ExposureResponse,
+  ForwardHedgingResponse,
+  FxVarResponse,
+  HedgeEffectivenessResponse,
+  SamplePortfolioResponse,
+} from "./types/fx.ts";
 
 type Tab = "exposure" | "hedging" | "var-analysis" | "hedge-effectiveness";
 
@@ -14,17 +33,77 @@ const TABS: [Tab, string][] = [
 
 function App() {
   const [sampleData, setSampleData] = useState<SamplePortfolioResponse | null>(null);
+  const [exposure, setExposure] = useState<ExposureResponse | null>(null);
+  const [forwards, setForwards] = useState<ForwardHedgingResponse | null>(null);
+  const [fxVar, setFxVar] = useState<FxVarResponse | null>(null);
+  const [hedgeEff, setHedgeEff] = useState<HedgeEffectivenessResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("exposure");
+  const [hedgeRatios, setHedgeRatios] = useState<Record<string, number>>({});
+  const [tenorYears, setTenorYears] = useState(0.25);
 
   useEffect(() => {
     setLoading(true);
     fetchSamplePortfolio()
-      .then(setSampleData)
+      .then((data) => {
+        setSampleData(data);
+        const ratios: Record<string, number> = {};
+        for (const p of data.positions) ratios[p.currency] = 0.5;
+        setHedgeRatios(ratios);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load sample data"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!sampleData) return;
+    computeExposure(sampleData.positions, sampleData.spot_rates, "USD")
+      .then(setExposure)
+      .catch(() => {});
+  }, [sampleData]);
+
+  useEffect(() => {
+    if (!sampleData) return;
+    computeForwards(
+      sampleData.positions, sampleData.spot_rates,
+      sampleData.interest_rates, hedgeRatios, tenorYears, "USD",
+    )
+      .then(setForwards)
+      .catch(() => {});
+  }, [sampleData, hedgeRatios, tenorYears]);
+
+  useEffect(() => {
+    if (!sampleData || !exposure) return;
+    const exposures: Record<string, number> = {};
+    for (const e of exposure.currency_exposures) {
+      exposures[e.currency] = e.net_exposure_base;
+    }
+    computeFxVar(exposures, sampleData.fx_returns)
+      .then(setFxVar)
+      .catch(() => {});
+  }, [sampleData, exposure]);
+
+  useEffect(() => {
+    if (!sampleData) return;
+    const n = Object.values(sampleData.fx_returns)[0]?.length ?? 0;
+    if (n < 10) return;
+    const rng = Array.from({ length: n }, (_, i) => {
+      let sum = 0;
+      for (const ccy of Object.keys(sampleData.fx_returns)) {
+        sum += sampleData.fx_returns[ccy][i];
+      }
+      return sum / Object.keys(sampleData.fx_returns).length;
+    });
+    const hedged = rng.map((v) => v * 0.3);
+    computeHedgeEffectiveness(rng, hedged)
+      .then(setHedgeEff)
+      .catch(() => {});
+  }, [sampleData]);
+
+  function handleHedgeRatioChange(currency: string, ratio: number) {
+    setHedgeRatios((prev) => ({ ...prev, [currency]: ratio }));
+  }
 
   return (
     <>
@@ -58,26 +137,41 @@ function App() {
 
       {!loading && !error && sampleData && (
         <div className="tab-content" key={tab}>
-          {tab === "exposure" && (
-            <div className="tab-placeholder">
-              Exposure tab - {sampleData.positions.length} positions loaded across{" "}
-              {Object.keys(sampleData.spot_rates).length} currencies
-            </div>
+          {tab === "exposure" && exposure && (
+            <>
+              <ExposureSummaryCards data={exposure} />
+              <ExposureBarChart exposures={exposure.currency_exposures} />
+            </>
           )}
-          {tab === "hedging" && (
-            <div className="tab-placeholder">
-              Hedging tab - forward rate modelling and hedge ratio controls
-            </div>
+
+          {tab === "hedging" && forwards && (
+            <ForwardHedgingPanel
+              data={forwards}
+              hedgeRatios={hedgeRatios}
+              tenorYears={tenorYears}
+              onHedgeRatioChange={handleHedgeRatioChange}
+              onTenorChange={setTenorYears}
+            />
           )}
-          {tab === "var-analysis" && (
-            <div className="tab-placeholder">
-              VaR Analysis tab - portfolio FX VaR, correlation heatmap and risk decomposition
-            </div>
+
+          {tab === "var-analysis" && fxVar && (
+            <>
+              <div className="charts-row">
+                <VarContributionChart
+                  contributions={fxVar.var_contributions}
+                  diversificationBenefit={fxVar.diversification_benefit}
+                />
+                <CorrelationHeatmap
+                  currencies={fxVar.currencies}
+                  matrix={fxVar.correlation_matrix}
+                />
+              </div>
+              <VarSurfaceTable surface={fxVar.var_surface} />
+            </>
           )}
-          {tab === "hedge-effectiveness" && (
-            <div className="tab-placeholder">
-              Hedge Effectiveness tab - dollar-offset, regression and P&L distribution comparison
-            </div>
+
+          {tab === "hedge-effectiveness" && hedgeEff && (
+            <HedgeEffectivenessPanel data={hedgeEff} />
           )}
         </div>
       )}
