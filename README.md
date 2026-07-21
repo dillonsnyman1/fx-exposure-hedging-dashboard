@@ -10,7 +10,7 @@ and measures hedging effectiveness.
 - **Frontend**: React + Vite + TypeScript dashboard (exposure breakdown,
   forward hedging, FX VaR, hedge effectiveness)
 
-> **Live demo**: *deploying…*
+> **Live demo**: [d1165825icva9n.cloudfront.net](https://d1165825icva9n.cloudfront.net) - load the sample portfolio, adjust hedge ratios and tenors, explore the VaR surface across confidence levels and holding periods, and check hedge effectiveness metrics.
 >
 > The backend is fully stateless: all risk calculations are done in-request with no database or storage of any kind.
 
