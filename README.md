@@ -1,5 +1,7 @@
 # FX Exposure & Hedging Dashboard
 
+[![CI/CD](https://github.com/dillonsnyman1/fx-exposure-hedging-dashboard/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dillonsnyman1/fx-exposure-hedging-dashboard/actions/workflows/ci-cd.yml)
+
 A full-stack demo that calculates FX portfolio exposure, models forward
 hedging via covered interest rate parity, computes currency-level VaR,
 and measures hedging effectiveness.
