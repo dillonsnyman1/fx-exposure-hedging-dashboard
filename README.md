@@ -8,6 +8,10 @@ and measures hedging effectiveness.
 - **Frontend**: React + Vite + TypeScript dashboard (exposure breakdown,
   forward hedging, FX VaR, hedge effectiveness)
 
+> **Live demo**: *deploying…*
+>
+> The backend is fully stateless: all risk calculations are done in-request with no database or storage of any kind.
+
 > **Disclaimer**: Simplified demo built for portfolio purposes. Not a
 > production risk system and should not be used for regulatory reporting or
 > live risk management. All data is synthetic.
@@ -188,10 +192,10 @@ stale after 60 seconds - the same pattern used in the
 [options pricer dashboard](https://github.com/dillonsnyman1/options-pricer-dashboard)'s
 ticker lookup. See [`frontend/`](frontend/).
 
-### Phase 3: AWS deployment *(planned)*
+### Phase 3: AWS deployment *(complete)*
 
 Terraform infrastructure (Lambda, API Gateway, S3, CloudFront) and a
-GitHub Actions CI/CD pipeline.
+GitHub Actions CI/CD pipeline. See [`infra/`](infra/).
 
 ---
 
@@ -264,4 +268,4 @@ pytest
 
 FastAPI on AWS Lambda (arm64) behind API Gateway, with the frontend on
 S3 + CloudFront. Deployed via Terraform on every push to `main`. See
-`infra/` *(planned)*.
+[`infra/`](infra/).
