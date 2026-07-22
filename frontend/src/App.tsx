@@ -68,7 +68,9 @@ function App() {
         const ratios: Record<string, number> = {};
         for (const p of data.positions) ratios[p.currency] = 0.5;
         setHedgeRatios(ratios);
+        return computeExposure(data.positions, data.spot_rates, "USD");
       })
+      .then(setExposure)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load sample data"))
       .finally(() => setLoading(false));
   }, []);
